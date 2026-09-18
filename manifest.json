@@ -1,0 +1,11 @@
+{
+  "name": "KAGAJ Document Organizer",
+  "short_name": "KAGAJ",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#053b29",
+  "theme_color": "#053b29",
+  "icons": [
+    { "src": "logo.jpg", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}
