@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAGAJ — Intelligent Digital Document Arranger & Utility System</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- JSPDF & QRCode JS CDN for PDF export and QR generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf6',
+              100: '#dcfea0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#0f5132',
+              900: '#053b29',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(16, 185, 129, 0.6);
+    }
+    .glass-card {
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.85);
+    }
+    .dark .glass-card {
+      background: rgba(17, 24, 39, 0.85);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-950 dark:text-gray-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+  <!-- Navigation Header -->
+  <header class="sticky top-0 z-30 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Brand Logo & Title -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('documents')">
+          <div class="w-12 h-12 rounded-xl overflow-hidden bg-brand-900 flex items-center justify-center p-1 border-2 border-brand-500/30 shadow-md transition-transform hover:scale-105">
+            <!-- Dynamic Logo Reference as requested -->
+            <img src="logo.jpg" alt="KAGAJ Logo" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/200x200/053b29/ffffff?text=कागज';" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl font-bold tracking-tight bg-gradient-to-r from-brand-700 via-brand-600 to-teal-600 dark:from-brand-500 dark:to-teal-400 bg-clip-text text-transparent">कागज</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/60 text-brand-800 dark:text-brand-100 font-semibold uppercase tracking-wider">Pro v2.4</span>
+            </div>
+            <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 tracking-widest font-medium uppercase" id="i18n-subhead">Document Organizer & Utility</p>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="hidden md:flex items-center space-x-1 bg-gray-100 dark:bg-gray-800/60 p-1.5 rounded-2xl border border-gray-200/60 dark:border-gray-700/50">
+          <button onclick="switchTab('documents')" id="tab-btn-documents" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all text-brand-700 dark:text-brand-400 bg-white dark:bg-gray-700 shadow-sm">
+            <i class="fa-solid fa-folder-closed"></i> <span data-i18n="navDocs">Documents</span>
+          </button>
+          <button onclick="switchTab('scanner')" id="tab-btn-scanner" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all">
+            <i class="fa-solid fa-camera font-bold"></i> <span data-i18n="navScanner">Cam Scanner</span>
+          </button>
+          <button onclick="switchTab('vault')" id="tab-btn-vault" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all">
+            <i class="fa-solid fa-users"></i> <span data-i18n="navVault">Family Vault</span>
+          </button>
+          <button onclick="switchTab('tools')" id="tab-btn-tools" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all">
+            <i class="fa-solid fa-sliders"></i> <span data-i18n="navTools">PDF & Utilities</span>
+          </button>
+        </nav>
+
+        <!-- Right Side Utility Controls -->
+        <div class="flex items-center space-x-2">
+          
+          <!-- Expiry Alert Bell -->
+          <button onclick="toggleNotificationPanel()" class="relative p-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+            <i class="fa-regular fa-bell text-lg"></i>
+            <span id="expiry-badge-count" class="hidden absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">0</span>
+          </button>
+
+          <!-- Language Selector -->
+          <div class="relative">
+            <select id="lang-selector" onchange="changeLanguage(this.value)" class="bg-gray-100 dark:bg-gray-800 text-xs font-semibold px-3 py-2 rounded-xl border-none outline-none cursor-pointer focus:ring-2 focus:ring-brand-500">
+              <option value="en">English (EN)</option>
+              <option value="np">नेपाली (NP)</option>
+              <option value="hi">हिन्दी (HI)</option>
+            </select>
+          </div>
+
+          <!-- Dark/Light Mode Toggle -->
+          <button onclick="toggleDarkMode()" class="p-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+            <i class="fa-solid fa-moon dark:hidden text-lg"></i>
+            <i class="fa-solid fa-sun hidden dark:block text-amber-400 text-lg"></i>
+          </button>
+
+          <!-- Quick Add Button -->
+          <button onclick="openUploadModal()" class="hidden sm:flex items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-medium text-sm px-4 py-2.5 rounded-xl shadow-md hover:shadow-brand-500/20 transition-all transform active:scale-95">
+            <i class="fa-solid fa-plus"></i> <span data-i18n="addDoc">Add New</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Panel Dropdown -->
+  <div id="notification-panel" class="hidden fixed top-20 right-4 sm:right-12 z-50 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 p-4 transform transition-all duration-200">
+    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+        <h4 class="font-bold text-sm" data-i18n="notifications">Alerts & Expiries</h4>
+      </div>
+      <button onclick="toggleNotificationPanel()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div id="notification-list" class="mt-3 max-h-64 overflow-y-auto custom-scrollbar space-y-2 text-xs">
+      <!-- Dynamic notification list populated via JS -->
+      <div class="text-center py-6 text-gray-400" data-i18n="noAlerts">No document expiration alerts.</div>
+    </div>
+  </div>
+
+  <!-- Main Workspace Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: DOCUMENTS MANAGEMENT                -->
+    <!-- ========================================== -->
+    <section id="tab-documents" class="tab-content space-y-6">
+      
+      <!-- Top Action & Search Bar -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-900 p-4 sm:p-5 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm">
+        
+        <!-- Search Input -->
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input type="text" id="doc-search" oninput="renderDocuments()" placeholder="Search documents by title, tags, citizenship #, bill ID..." class="w-full pl-11 pr-10 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border-none outline-none focus:ring-2 focus:ring-brand-500 text-sm transition-all">
+          <button onclick="clearSearch()" id="clear-search-btn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="category-filter" onchange="renderDocuments()" class="bg-gray-100 dark:bg-gray-800 border-none rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-2 focus:ring-brand-500 cursor-pointer">
+            <option value="ALL" data-i18n="catAll">All Categories</option>
+            <option value="IDENTITY" data-i18n="catIdentity">Citizenship & Passports</option>
+            <option value="FINANCE" data-i18n="catFinance">Bills & Banking</option>
+            <option value="ACADEMIC" data-i18n="catAcademic">Certificates & Degrees</option>
+            <option value="MEDICAL" data-i18n="catMedical">Medical & Health</option>
+            <option value="PROPERTY" data-i18n="catProperty">Land & Vehicle</option>
+            <option value="OTHER" data-i18n="catOther">Miscellaneous</option>
+          </select>
+
+          <!-- Vault Filter -->
+          <select id="member-filter" onchange="renderDocuments()" class="bg-gray-100 dark:bg-gray-800 border-none rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-2 focus:ring-brand-500 cursor-pointer">
+            <option value="ALL" data-i18n="memberAll">All Family Members</option>
+            <option value="Self">Self (Default)</option>
+          </select>
+
+          <!-- Sorting Filter -->
+          <select id="sort-filter" onchange="renderDocuments()" class="bg-gray-100 dark:bg-gray-800 border-none rounded-xl px-3 py-2.5 text-xs font-semibold focus:ring-2 focus:ring-brand-500 cursor-pointer">
+            <option value="NEWEST" data-i18n="sortNewest">Newest First</option>
+            <option value="OLDEST" data-i18n="sortOldest">Oldest First</option>
+            <option value="EXPIRY" data-i18n="sortExpiry">Expiring Soonest</option>
+            <option value="NAME" data-i18n="sortName">Name (A-Z)</option>
+          </select>
+
+          <!-- View Switcher -->
+          <div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            <button onclick="setViewMode('grid')" id="view-grid-btn" class="p-2 rounded-lg text-brand-600 dark:text-brand-400 bg-white dark:bg-gray-700 shadow-sm transition-all">
+              <i class="fa-solid fa-grip"></i>
+            </button>
+            <button onclick="setViewMode('list')" id="view-list-btn" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all">
+              <i class="fa-solid fa-list-ul"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Analytics Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-800 flex items-center justify-between shadow-sm">
+          <div>
+            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider" data-i18n="statTotal">Total Documents</p>
+            <h3 id="stat-count" class="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-0.5">0</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-file-shield"></i>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-800 flex items-center justify-between shadow-sm">
+          <div>
+            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider" data-i18n="statExpiring">Expiring Soon</p>
+            <h3 id="stat-expiring" class="text-2xl font-bold text-amber-500 mt-0.5">0</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-500 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-800 flex items-center justify-between shadow-sm">
+          <div>
+            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider" data-i18n="statVaults">Family Members</p>
+            <h3 id="stat-members" class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-0.5">1</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 text-teal-500 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-user-group"></i>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-800 flex items-center justify-between shadow-sm">
+          <div>
+            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider" data-i18n="statStorage">Local Storage</p>
+            <h3 id="stat-storage" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">0 KB</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-hard-drive"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document List / Grid Canvas Container -->
+      <div id="document-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Empty State View -->
+      <div id="empty-state" class="hidden text-center py-16 px-4 bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-300 dark:border-gray-800">
+        <div class="w-20 h-20 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl">
+          <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100" data-i18n="emptyTitle">No Documents Found</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto" data-i18n="emptySub">Upload your first citizenship card, license, marksheets or bills to keep them organized offline.</p>
+        <button onclick="openUploadModal()" class="mt-5 inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-5 py-3 rounded-xl shadow-lg transition-all">
+          <i class="fa-solid fa-plus"></i> <span data-i18n="addDoc">Add New Document</span>
+        </button>
+      </div>
+
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 2: LIVE CAM SCANNER & CROPPER          -->
+    <!-- ========================================== -->
+    <section id="tab-scanner" class="tab-content hidden space-y-6">
+      
+      <div class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+          <div>
+            <h2 class="text-xl font-bold flex items-center gap-2">
+              <i class="fa-solid fa-camera text-brand-600"></i>
+              <span data-i18n="scannerTitle">CamScanner Studio</span>
+            </h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" data-i18n="scannerSub">Capture, adjust contrast, crop, and convert physical papers to high-clarity digital scans.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="startCamera()" id="btn-start-cam" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2">
+              <i class="fa-solid fa-video"></i> <span data-i18n="openCam">Start Camera</span>
+            </button>
+            <label class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-gray-700 dark:text-gray-200 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-2">
+              <i class="fa-solid fa-upload"></i> <span data-i18n="uploadScan">Import Image</span>
+              <input type="file" id="scanner-file-input" accept="image/*" onchange="handleScannerImport(event)" class="hidden">
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          
+          <!-- Camera Feed & Preview Canvas Box -->
+          <div class="lg:col-span-2 relative min-h-[380px] bg-gray-950 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-800 shadow-inner group">
+            
+            <video id="scanner-video" autoplay playsinline class="hidden w-full h-auto max-h-[480px] object-contain"></video>
+            <canvas id="scanner-canvas" class="max-w-full max-h-[480px] object-contain rounded-lg shadow-md"></canvas>
+
+            <div id="scanner-placeholder" class="text-center p-8 text-gray-500">
+              <i class="fa-solid fa-receipt text-5xl mb-3 opacity-40"></i>
+              <p class="text-xs font-medium" data-i18n="camPlace">Start camera or upload an image to begin digitizing documents.</p>
+            </div>
+
+            <!-- Overlay Capture Button -->
+            <button id="btn-snap" onclick="takeSnapshot()" class="hidden absolute bottom-4 bg-red-600 hover:bg-red-700 text-white w-14 h-14 rounded-full border-4 border-white shadow-xl items-center justify-center text-xl transition-transform active:scale-90">
+              <i class="fa-solid fa-camera"></i>
+            </button>
+
+          </div>
+
+          <!-- Realtime Image Processing Controls -->
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-5 rounded-2xl space-y-4 border border-gray-200/60 dark:border-gray-700/50">
+            <h4 class="font-bold text-sm flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+              <span data-i18n="adjustments">Enhancements & Filters</span>
+            </h4>
+
+            <!-- Grayscale Filter Switch -->
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium" data-i18n="filterBw">Black & White Document</span>
+              <input type="checkbox" id="filter-bw" onchange="applyCanvasFilters()" class="w-4 h-4 text-brand-600 rounded focus:ring-brand-500">
+            </div>
+
+            <!-- Contrast Range -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <span data-i18n="contrast">Contrast</span>
+                <span id="contrast-val" class="font-bold">100%</span>
+              </div>
+              <input type="range" id="scanner-contrast" min="50" max="200" value="100" oninput="applyCanvasFilters()" class="w-full accent-brand-600">
+            </div>
+
+            <!-- Brightness Range -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <span data-i18n="brightness">Brightness</span>
+                <span id="brightness-val" class="font-bold">100%</span>
+              </div>
+              <input type="range" id="scanner-brightness" min="50" max="180" value="100" oninput="applyCanvasFilters()" class="w-full accent-brand-600">
+            </div>
+
+            <!-- Sharpness Simulation -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <span data-i18n="sharpness">Magic Sharpness</span>
+                <span id="sharpness-val" class="font-bold">0%</span>
+              </div>
+              <input type="range" id="scanner-sharpness" min="0" max="100" value="0" oninput="applyCanvasFilters()" class="w-full accent-brand-600">
+            </div>
+
+            <!-- Rotation Control -->
+            <div class="flex items-center justify-between gap-2 pt-2">
+              <button onclick="rotateCanvas(-90)" class="flex-1 py-2 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-600 transition-colors">
+                <i class="fa-solid fa-rotate-left mr-1"></i> -90°
+              </button>
+              <button onclick="rotateCanvas(90)" class="flex-1 py-2 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-xs font-semibold rounded-xl border border-gray-200 dark:border-gray-600 transition-colors">
+                <i class="fa-solid fa-rotate-right mr-1"></i> +90°
+              </button>
+            </div>
+
+            <!-- Finalize & Save Scan -->
+            <button onclick="saveScanToDocs()" class="w-full mt-4 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-semibold text-xs py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="saveScan">Save Scanned Document</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: FAMILY VAULT MANAGEMENT             -->
+    <!-- ========================================== -->
+    <section id="tab-vault" class="tab-content hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div>
+          <h2 class="text-xl font-bold flex items-center gap-2">
+            <i class="fa-solid fa-users text-teal-600"></i>
+            <span data-i18n="vaultTitle">Family & Household Vault</span>
+          </h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-i18n="vaultSub">Organize documents separately for parents, spouse, or dependents for quick retrieval during official filings.</p>
+        </div>
+        <button onclick="openAddMemberModal()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow transition-all flex items-center gap-2">
+          <i class="fa-solid fa-user-plus"></i> <span data-i18n="addMember">Add Family Member</span>
+        </button>
+      </div>
+
+      <!-- Family Members List Grid -->
+      <div id="members-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: PDF COMPILER & QR UTILITIES         -->
+    <!-- ========================================== -->
+    <section id="tab-tools" class="tab-content hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Multi-document PDF Compiler -->
+        <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-900/30 text-red-500 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-base" data-i18n="pdfCompiler">PDF Dossier Compiler</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="pdfCompilerSub">Merge multiple scanned certificates & citizenship files into a single unified PDF.</p>
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-600 dark:text-gray-300" data-i18n="selectPdfDocs">Select documents to include in the merged output dossier:</p>
+          
+          <div id="pdf-checklist" class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 pr-1 border border-gray-100 dark:border-gray-800 p-3 rounded-2xl bg-gray-50/50 dark:bg-gray-800/30">
+            <!-- Dynamic checklist -->
+          </div>
+
+          <button onclick="generateMergedPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-file-export"></i> <span data-i18n="exportPdf">Compile & Download Single PDF</span>
+          </button>
+        </div>
+
+        <!-- Offline QR Code Generator & Quick Share -->
+        <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-500 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-base" data-i18n="qrGenTitle">Secure QR Generator</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="qrGenSub">Convert document metadata or citizenship ID into a shareable offline QR code.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-300" data-i18n="qrDocSelect">Select Document</label>
+              <select id="qr-doc-select" onchange="generateQrCodeForSelectedDoc()" class="w-full mt-1 bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500">
+                <!-- Option values -->
+              </select>
+            </div>
+
+            <div class="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
+              <div id="qrcode-box" class="p-2 bg-white rounded-xl shadow-md min-h-[128px] min-w-[128px] flex items-center justify-center">
+                <span class="text-[10px] text-gray-400">QR Code Preview</span>
+              </div>
+              <p class="text-[11px] text-gray-500 mt-3 text-center" id="qr-info-text">Select a document above to generate an offline QR payload.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 z-40 px-4 py-2 flex items-center justify-around shadow-lg">
+    <button onclick="switchTab('documents')" id="mob-tab-documents" class="flex flex-col items-center text-brand-600 dark:text-brand-400">
+      <i class="fa-solid fa-folder-closed text-lg"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="navDocs">Docs</span>
+    </button>
+    <button onclick="switchTab('scanner')" id="mob-tab-scanner" class="flex flex-col items-center text-gray-400 hover:text-brand-600">
+      <i class="fa-solid fa-camera text-lg"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="navScanner">Scanner</span>
+    </button>
+    <button onclick="openUploadModal()" class="w-11 h-11 -mt-5 bg-brand-600 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+      <i class="fa-solid fa-plus text-lg"></i>
+    </button>
+    <button onclick="switchTab('vault')" id="mob-tab-vault" class="flex flex-col items-center text-gray-400 hover:text-brand-600">
+      <i class="fa-solid fa-users text-lg"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="navVault">Vault</span>
+    </button>
+    <button onclick="switchTab('tools')" id="mob-tab-tools" class="flex flex-col items-center text-gray-400 hover:text-brand-600">
+      <i class="fa-solid fa-sliders text-lg"></i>
+      <span class="text-[10px] font-medium mt-0.5" data-i18n="navTools">Tools</span>
+    </button>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: ADD / EDIT DOCUMENT               -->
+  <!-- ========================================== -->
+  <div id="modal-doc" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-gray-900 w-full max-w-xl rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4 my-8 transition-all">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+        <h3 id="modal-title" class="font-bold text-lg" data-i18n="modalAddDoc">Add New Document</h3>
+        <button onclick="closeUploadModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="doc-form" onsubmit="handleDocSubmit(event)" class="space-y-4">
+        <input type="hidden" id="edit-doc-id">
+
+        <!-- Title & Category -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1" data-i18n="lblTitle">Document Title *</label>
+            <input type="text" id="form-title" required placeholder="e.g. Citizenship Front & Back" class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1" data-i18n="lblCategory">Category *</label>
+            <select id="form-category" required class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-brand-500">
+              <option value="IDENTITY" data-i18n="catIdentity">Citizenship & Passports</option>
+              <option value="FINANCE" data-i18n="catFinance">Bills & Banking</option>
+              <option value="ACADEMIC" data-i18n="catAcademic">Certificates & Degrees</option>
+              <option value="MEDICAL" data-i18n="catMedical">Medical & Health</option>
+              <option value="PROPERTY" data-i18n="catProperty">Land & Vehicle</option>
+              <option value="OTHER" data-i18n="catOther">Miscellaneous</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Family Member & ID Number -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1" data-i18n="lblMember">Owner / Family Member</label>
+            <select id="form-member" class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-brand-500">
+              <option value="Self">Self (Default)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1" data-i18n="lblDocNum">Document ID / Reg Number</label>
+            <input type="text" id="form-docnum" placeholder="e.g. 27-01-78-12345" class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <!-- Expiry Date & Tags -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1" data-i18n="lblExpiry">Expiry Date (Optional)</label>
+            <input type="date" id="form-expiry" class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1" data-i18n="lblTags">Tags (Comma separated)</label>
+            <input type="text" id="form-tags" placeholder="e.g. tax, 2026, official" class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <!-- Image Upload Field -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1" data-i18n="lblFile">Upload Image / Scan File *</label>
+          <input type="file" id="form-file" accept="image/*" onchange="previewDocFile(event)" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/50 dark:file:text-brand-300">
+        </div>
+
+        <!-- Image Preview Box -->
+        <div id="file-preview-container" class="hidden relative h-36 bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+          <img id="file-preview-img" src="" alt="Preview" class="max-h-full object-contain">
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <button type="button" onclick="closeUploadModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" data-i18n="btnCancel">Cancel</button>
+          <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-md transition-all" data-i18n="btnSave">Save Document</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: FULL DOCUMENT PREVIEW & DETAILS   -->
+  <!-- ========================================== -->
+  <div id="modal-view" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden my-8">
+      
+      <div class="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-900/40 text-brand-600 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-file-lines"></i>
+          </div>
+          <div>
+            <h3 id="view-title" class="font-bold text-base text-gray-800 dark:text-gray-100">Document Title</h3>
+            <p id="view-subtitle" class="text-xs text-gray-400">Owner: Self • Category: Identity</p>
+          </div>
+        </div>
+        <button onclick="closeViewModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Image Preview Container -->
+        <div class="bg-gray-950 rounded-2xl overflow-hidden min-h-[260px] flex items-center justify-center border border-gray-800 p-2">
+          <img id="view-image" src="" alt="Document Scan" class="max-h-[340px] max-w-full object-contain rounded">
+        </div>
+
+        <!-- Details Sidebar -->
+        <div class="space-y-4 flex flex-col justify-between">
+          <div class="space-y-3 text-xs">
+            
+            <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-1">
+              <p class="text-gray-400 uppercase font-semibold text-[10px]" data-i18n="lblDocNum">Document ID Number</p>
+              <p id="view-docnum" class="font-bold text-sm tracking-wide text-brand-700 dark:text-brand-400">N/A</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-0.5">
+                <p class="text-gray-400 uppercase font-semibold text-[10px]" data-i18n="lblExpiry">Expiry Date</p>
+                <p id="view-expiry" class="font-semibold text-gray-700 dark:text-gray-200">No Expiry</p>
+              </div>
+              <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-0.5">
+                <p class="text-gray-400 uppercase font-semibold text-[10px]" data-i18n="lblDateAdded">Added On</p>
+                <p id="view-created" class="font-semibold text-gray-700 dark:text-gray-200">2026-09-18</p>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-gray-400 uppercase font-semibold text-[10px] mb-1.5" data-i18n="lblTags">Tags</p>
+              <div id="view-tags-list" class="flex flex-wrap gap-1">
+                <!-- Dynamic Tag Badges -->
+              </div>
+            </div>
+
+            <!-- Metadata Info -->
+            <div class="pt-2 text-[11px] text-gray-400 border-t border-gray-100 dark:border-gray-800">
+              <i class="fa-solid fa-lock mr-1 text-brand-500"></i> Stored locally on device in browser localStorage database.
+            </div>
+
+          </div>
+
+          <!-- Bottom Actions -->
+          <div class="flex items-center gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <button id="btn-download-img" onclick="downloadDocImage()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs py-2.5 rounded-xl shadow transition-all flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-download"></i> Download
+            </button>
+            <button id="btn-edit-doc" onclick="editCurrentDoc()" class="p-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs rounded-xl font-semibold transition-colors">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button id="btn-delete-doc" onclick="deleteCurrentDoc()" class="p-2.5 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 text-red-600 text-xs rounded-xl font-semibold transition-colors">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 3: ADD FAMILY MEMBER -->
+  <div id="modal-member" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
+        <h3 class="font-bold text-base" data-i18n="addMember">Add Family Member</h3>
+        <button onclick="closeAddMemberModal()" class="text-gray-400 hover:text-gray-600 text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-gray-600 dark:text-gray-300 mb-1">Full Name *</label>
+          <input type="text" id="member-name-input" placeholder="e.g. Ram Bahadur Shrestha" class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 font-medium focus:ring-2 focus:ring-brand-500">
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-600 dark:text-gray-300 mb-1">Relationship</label>
+          <select id="member-relation-input" class="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-xl p-2.5 font-semibold focus:ring-2 focus:ring-brand-500">
+            <option value="Parent">Parent</option>
+            <option value="Spouse">Spouse</option>
+            <option value="Child">Child</option>
+            <option value="Sibling">Sibling</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeAddMemberModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">Cancel</button>
+        <button onclick="saveFamilyMember()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow">Save Member</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    /* ===================================================================
+       KAGAJ CORE JAVASCRIPT STATE ENGINE & LOCALSTORAGE DATABASE
+       =================================================================== */
+
+    // Dictionary of Multilingual Text Strings
+    const i18n = {
+      en: {
+        navDocs: "Documents",
+        navScanner: "Cam Scanner",
+        navVault: "Family Vault",
+        navTools: "PDF & Utilities",
+        addDoc: "Add New",
+        catAll: "All Categories",
+        catIdentity: "Citizenship & Passports",
+        catFinance: "Bills & Banking",
+        catAcademic: "Certificates & Degrees",
+        catMedical: "Medical & Health",
+        catProperty: "Land & Vehicle",
+        catOther: "Miscellaneous",
+        memberAll: "All Family Members",
+        sortNewest: "Newest First",
+        sortOldest: "Oldest First",
+        sortExpiry: "Expiring Soonest",
+        sortName: "Name (A-Z)",
+        statTotal: "Total Documents",
+        statExpiring: "Expiring Soon",
+        statVaults: "Family Members",
+        statStorage: "Local Storage",
+        emptyTitle: "No Documents Found",
+        emptySub: "Upload your first citizenship card, license, marksheets or bills to keep them organized offline.",
+        scannerTitle: "CamScanner Studio",
+        scannerSub: "Capture, adjust contrast, crop, and convert physical papers to high-clarity digital scans.",
+        openCam: "Start Camera",
+        uploadScan: "Import Image",
+        camPlace: "Start camera or upload an image to begin digitizing documents.",
+        adjustments: "Enhancements & Filters",
+        filterBw: "Black & White Document",
+        contrast: "Contrast",
+        brightness: "Brightness",
+        sharpness: "Magic Sharpness",
+        saveScan: "Save Scanned Document",
+        vaultTitle: "Family & Household Vault",
+        vaultSub: "Organize documents separately for parents, spouse, or dependents for quick retrieval during official filings.",
+        addMember: "Add Family Member",
+        pdfCompiler: "PDF Dossier Compiler",
+        pdfCompilerSub: "Merge multiple scanned certificates & citizenship files into a single unified PDF.",
+        selectPdfDocs: "Select documents to include in the merged output dossier:",
+        exportPdf: "Compile & Download Single PDF",
+        qrGenTitle: "Secure QR Generator",
+        qrGenSub: "Convert document metadata or citizenship ID into a shareable offline QR code.",
+        qrDocSelect: "Select Document",
+        modalAddDoc: "Add New Document",
+        lblTitle: "Document Title *",
+        lblCategory: "Category *",
+        lblMember: "Owner / Family Member",
+        lblDocNum: "Document ID / Reg Number",
+        lblExpiry: "Expiry Date (Optional)",
+        lblTags: "Tags (Comma separated)",
+        lblFile: "Upload Image / Scan File *",
+        btnCancel: "Cancel",
+        btnSave: "Save Document",
+        noAlerts: "No document expiration alerts.",
+        notifications: "Alerts & Expiries"
+      },
+      np: {
+        navDocs: "कागजातहरू",
+        navScanner: "क्यामेरा स्क्यानर",
+        navVault: "परिवार भल्ट",
+        navTools: "PDF र उपयोगिताहरू",
+        addDoc: "नयाँ थप्नुहोस्",
+        catAll: "सबै वर्गहरू",
+        catIdentity: "नागरिकता र राहदानी",
+        catFinance: "बिल र बैंकिङ",
+        catAcademic: "प्रमाणपत्र र डिग्री",
+        catMedical: "स्वास्थ्य र चिकित्सा",
+        catProperty: "जग्गा र सवारी साधन",
+        catOther: "विविध",
+        memberAll: "सबै सदस्यहरू",
+        sortNewest: "नयाँ पहिले",
+        sortOldest: "पुराना पहिले",
+        sortExpiry: "म्याद सकिने मिति",
+        sortName: "नाम (A-Z)",
+        statTotal: "कुल कागजात",
+        statExpiring: "म्याद सकिन लागेको",
+        statVaults: "परिवार सदस्य",
+        statStorage: "लोकल स्टोरेज",
+        emptyTitle: "कुनै कागजात भेटिएन",
+        emptySub: "नागरिकता, लाइसेन्स वा अन्य कागजातहरू सुरक्षित रूपमा राख्नुहोस्।",
+        scannerTitle: "क्याम स्क्यानर स्टुडियो",
+        scannerSub: "कागजात फोटो खिच्नुहोस् वा डिजिटल स्क्यानमा रूपान्तरण गर्नुहोस्।",
+        openCam: "क्यामेरा खोल्नुहोस्",
+        uploadScan: "फोटो अपलोड गर्नुहोस्",
+        camPlace: "स्क्यान गर्न क्यामेरा सुरु गर्नुहोस् वा फोटो छान्नुहोस्।",
+        adjustments: "फिल्टर र कन्ट्रास्ट",
+        filterBw: "ब्ल्याक एण्ड ह्वाइट",
+        contrast: "कन्ट्रास्ट",
+        brightness: "उज्यालोपणा",
+        sharpness: "शार्पनेस",
+        saveScan: "स्क्यान कागजात सेभ गर्नुहोस्",
+        vaultTitle: "पारिवारिक भल्ट",
+        vaultSub: "परिवारका प्रत्येक सदस्यका कागजातहरू छुट्टाछुट्टै व्यवस्थापन गर्नुहोस्।",
+        addMember: "सदस्य थप्नुहोस्",
+        pdfCompiler: "PDF कम्पाइलर",
+        pdfCompilerSub: "धेरै कागजातहरूलाई एउटै PDF मा जोड्नुहोस्।",
+        selectPdfDocs: "PDF मा राख्न कागजातहरू छान्नुहोस्:",
+        exportPdf: "PDF बनाउनुहोस् र डाउनलोड गर्नुहोस्",
+        qrGenTitle: "QR कोड जेनेरेटर",
+        qrGenSub: "कागजात विवरणबाट सेयर गर्न मिल्ने QR कोड बनाउनुहोस्।",
+        qrDocSelect: "कागजात छान्नुहोस्",
+        modalAddDoc: "नयाँ कागजात थप्नुहोस्",
+        lblTitle: "कागजातको नाम *",
+        lblCategory: "वर्ग *",
+        lblMember: "सदस्य / धनी",
+        lblDocNum: "आईडी / दर्ता नम्बर",
+        lblExpiry: "म्याद सकिने मिति",
+        lblTags: "ट्यागहरू",
+        lblFile: "फोटो वा स्क्यान फाइल *",
+        btnCancel: "रद्द गर्नुहोस्",
+        btnSave: "सुरक्षित गर्नुहोस्",
+        noAlerts: "कुनै सूचना छैन।",
+        notifications: "सूचना र अलर्टहरू"
+      },
+      hi: {
+        navDocs: "दस्तावेज़",
+        navScanner: "कैम स्कैनर",
+        navVault: "फैमिली वॉल्ट",
+        navTools: "PDF एवं टूल्स",
+        addDoc: "नया जोड़ें",
+        catAll: "सभी श्रेणियां",
+        catIdentity: "नागरिकता एवं पासपोर्ट",
+        catFinance: "बिल एवं बैंकिंग",
+        catAcademic: "प्रमाणपत्र एवं डिग्री",
+        catMedical: "चिकित्सा एवं स्वास्थ्य",
+        catProperty: "भूमि एवं वाहन",
+        catOther: "विविध",
+        memberAll: "सभी सदस्य",
+        sortNewest: "नवीनतम पहले",
+        sortOldest: "पुराने पहले",
+        sortExpiry: "समाप्ति तिथि",
+        sortName: "नाम (A-Z)",
+        statTotal: "कुल दस्तावेज़",
+        statExpiring: "जल्द समाप्त",
+        statVaults: "परिवार सदस्य",
+        statStorage: "लोकल स्टोरेज",
+        emptyTitle: "कोई दस्तावेज़ नहीं मिला",
+        emptySub: "अपने दस्तावेज़ों को सुरक्षित रूप से स्टोर करें।",
+        scannerTitle: "कैमस्कैनर स्टूडियो",
+        scannerSub: "दस्तावेज़ों को स्कैन और साफ़ करें।",
+        openCam: "कैमरा शुरू करें",
+        uploadScan: "इमेज अपलोड करें",
+        camPlace: "स्कैन शुरू करने के लिए फोटो चुनें या कैमरा खोलें।",
+        adjustments: "फिल्टर एवं एडजस्टमेंट",
+        filterBw: "ब्लैक एंड व्हाइट",
+        contrast: "कॉन्ट्रास्ट",
+        brightness: "ब्राइटनेस",
+        sharpness: "शार्पनेस",
+        saveScan: "स्कैन सेव करें",
+        vaultTitle: "पारिवारिक वॉल्ट",
+        vaultSub: "परिवार के सदस्यों के अनुसार दस्तावेज़ व्यवस्थित करें।",
+        addMember: "सदस्य जोड़ें",
+        pdfCompiler: "PDF कम्पाइलर",
+        pdfCompilerSub: "कई दस्तावेज़ों को एक PDF में मिलाएं।",
+        selectPdfDocs: "PDF में शामिल करने के लिए दस्तावेज़ चुनें:",
+        exportPdf: "PDF बनाएं और डाउनलोड करें",
+        qrGenTitle: "क्यूआर जनरेटर",
+        qrGenSub: "दस्तावेज़ का क्यूआर कोड बनाएं।",
+        qrDocSelect: "दस्तावेज़ चुनें",
+        modalAddDoc: "नया दस्तावेज़ जोड़ें",
+        lblTitle: "दस्तावेज़ का नाम *",
+        lblCategory: "श्रेणी *",
+        lblMember: "मालिक / सदस्य",
+        lblDocNum: "आईडी / पंजीकरण संख्या",
+        lblExpiry: "समाप्ति तिथि",
+        lblTags: "टैग",
+        lblFile: "फ़ाइल अपलोड *",
+        btnCancel: "रद्द करें",
+        btnSave: "सुरक्षित करें",
+        noAlerts: "कोई अलर्ट नहीं है।",
+        notifications: "अधिसूचनाएं"
+      }
+    };
+
+    // Application Global State
+    let state = {
+      documents: [],
+      members: ["Self"],
+      activeTab: "documents",
+      currentLang: "en",
+      viewMode: "grid",
+      selectedDocId: null,
+      cameraStream: null,
+      scannerRotation: 0
+    };
+
+    // Sample Starter Mock Data
+    const defaultSampleDocs = [
+      {
+        id: "doc_101",
+        title: "Nepali Citizenship Card (Front & Back)",
+        category: "IDENTITY",
+        member: "Self",
+        docNum: "27-01-78-04921",
+        expiry: "",
+        created: "2026-01-15",
+        tags: ["official", "government", "id"],
+        image: "https://placehold.co/600x400/053b29/ffffff?text=Citizenship+Card+Scan"
+      },
+      {
+        id: "doc_102",
+        title: "Smart Driving License",
+        category: "PROPERTY",
+        member: "Self",
+        docNum: "01-08-00984521",
+        expiry: "2026-10-30", // Expiring soon relative to late 2026
+        created: "2026-02-10",
+        tags: ["license", "vehicle", "yatayat"],
+        image: "https://placehold.co/600x400/0f5132/ffffff?text=Driving+License+Scan"
+      },
+      {
+        id: "doc_103",
+        title: "Electricity & Water Bill Receipt",
+        category: "FINANCE",
+        member: "Self",
+        docNum: "NEA-883921",
+        expiry: "2026-09-25",
+        created: "2026-09-01",
+        tags: ["utility", "bill", "paid"],
+        image: "https://placehold.co/600x400/047857/ffffff?text=Utility+Bill+Receipt"
+      }
+    ];
+
+    // Audio Feedback Generator using Web Audio API
+    function playBeep(type = 'click') {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        if (type === 'click') {
+          osc.frequency.setValueAtTime(440, ctx.currentTime);
+          gain.gain.setValueAtTime(0.05, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.05);
+        } else if (type === 'success') {
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
+        }
+      } catch (e) {
+        // Ignore audio errors
+      }
+    }
+
+    // Initialize Application
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStorageData();
+      renderAll();
+      updateNotifications();
+    });
+
+    // Load LocalStorage Persistence
+    function loadStorageData() {
+      const savedDocs = localStorage.getItem('kagaj_docs');
+      if (savedDocs) {
+        state.documents = JSON.parse(savedDocs);
+      } else {
+        state.documents = defaultSampleDocs;
+        saveStorageData();
+      }
+
+      const savedMembers = localStorage.getItem('kagaj_members');
+      if (savedMembers) {
+        state.members = JSON.parse(savedMembers);
+      } else {
+        state.members = ["Self", "Father", "Mother"];
+        saveMembersStorage();
+      }
+    }
+
+    function saveStorageData() {
+      localStorage.setItem('kagaj_docs', JSON.stringify(state.documents));
+      calculateStorageMetrics();
+    }
+
+    function saveMembersStorage() {
+      localStorage.setItem('kagaj_members', JSON.stringify(state.members));
+    }
+
+    function calculateStorageMetrics() {
+      const dataStr = JSON.stringify(state.documents);
+      const bytes = new Blob([dataStr]).size;
+      const kb = (bytes / 1024).toFixed(1);
+      const el = document.getElementById('stat-storage');
+      if (el) el.innerText = `${kb} KB`;
+    }
+
+    // Tab Switching Engine
+    function switchTab(tabId) {
+      playBeep('click');
+      state.activeTab = tabId;
+
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`)?.classList.remove('hidden');
+
+      // Update Tab Styles
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('text-brand-700', 'dark:text-brand-400', 'bg-white', 'dark:bg-gray-700', 'shadow-sm');
+        btn.classList.add('text-gray-600', 'dark:text-gray-300');
+      });
+
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('text-brand-700', 'dark:text-brand-400', 'bg-white', 'dark:bg-gray-700', 'shadow-sm');
+        activeBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
+      }
+
+      // Stop camera if navigating away from scanner
+      if (tabId !== 'scanner' && state.cameraStream) {
+        state.cameraStream.getTracks().forEach(track => track.stop());
+        state.cameraStream = null;
+      }
+
+      if (tabId === 'tools') {
+        populatePdfChecklist();
+        populateQrDocSelect();
+      }
+    }
+
+    // Language & Translation Engine
+    function changeLanguage(lang) {
+      state.currentLang = lang;
+      const langDict = i18n[lang] || i18n.en;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (langDict[key]) {
+          el.innerText = langDict[key];
+        }
+      });
+    }
+
+    // Theme Toggle
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      playBeep('click');
+    }
+
+    // Dynamic Filter & Search Render Engine
+    function renderDocuments() {
+      const container = document.getElementById('document-container');
+      const emptyState = document.getElementById('empty-state');
+      if (!container) return;
+
+      const searchQuery = (document.getElementById('doc-search')?.value || '').toLowerCase().trim();
+      const catFilter = document.getElementById('category-filter')?.value || 'ALL';
+      const memberFilter = document.getElementById('member-filter')?.value || 'ALL';
+      const sortFilter = document.getElementById('sort-filter')?.value || 'NEWEST';
+
+      // Clear search button visibility
+      const clearBtn = document.getElementById('clear-search-btn');
+      if (clearBtn) {
+        if (searchQuery.length > 0) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+
+      // Filter Logic
+      let filtered = state.documents.filter(doc => {
+        const matchesSearch = doc.title.toLowerCase().includes(searchQuery) ||
+                              doc.docNum.toLowerCase().includes(searchQuery) ||
+                              doc.tags.some(t => t.toLowerCase().includes(searchQuery));
+        const matchesCat = catFilter === 'ALL' || doc.category === catFilter;
+        const matchesMember = memberFilter === 'ALL' || doc.member === memberFilter;
+
+        return matchesSearch && matchesCat && matchesMember;
+      });
+
+      // Sorting Logic
+      filtered.sort((a, b) => {
+        if (sortFilter === 'NEWEST') return new Date(b.created) - new Date(a.created);
+        if (sortFilter === 'OLDEST') return new Date(a.created) - new Date(b.created);
+        if (sortFilter === 'NAME') return a.title.localeCompare(b.title);
+        if (sortFilter === 'EXPIRY') {
+          if (!a.expiry) return 1;
+          if (!b.expiry) return -1;
+          return new Date(a.expiry) - new Date(b.expiry);
+        }
+        return 0;
+      });
+
+      // Update Top Quick Stat Metrics
+      document.getElementById('stat-count').innerText = state.documents.length;
+      
+      const expiringDocs = state.documents.filter(d => {
+        if (!d.expiry) return false;
+        const diffDays = (new Date(d.expiry) - new Date()) / (1000 * 3600 * 24);
+        return diffDays >= 0 && diffDays <= 60;
+      });
+      document.getElementById('stat-expiring').innerText = expiringDocs.length;
+      document.getElementById('stat-members').innerText = state.members.length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyState?.classList.remove('hidden');
+        return;
+      }
+
+      emptyState?.classList.add('hidden');
+
+      // Grid vs List Render
+      if (state.viewMode === 'grid') {
+        container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+        container.innerHTML = filtered.map(doc => renderGridCardHtml(doc)).join('');
+      } else {
+        container.className = "space-y-3";
+        container.innerHTML = filtered.map(doc => renderListCardHtml(doc)).join('');
+      }
+    }
+
+    function renderGridCardHtml(doc) {
+      const categoryIcon = getCategoryIcon(doc.category);
+      const isExpiringSoon = checkIsExpiringSoon(doc.expiry);
+
+      return `
+        <div onclick="openViewModal('${doc.id}')" class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-500/50 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <div class="relative h-44 bg-gray-950 flex items-center justify-center p-2 overflow-hidden">
+              <img src="${doc.image}" alt="${doc.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+              <span class="absolute top-3 left-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-2.5 py-1 rounded-xl text-[10px] font-bold text-gray-700 dark:text-gray-200 shadow-sm flex items-center gap-1.5">
+                <i class="${categoryIcon} text-brand-600"></i> ${doc.category}
+              </span>
+              ${isExpiringSoon ? `
+                <span class="absolute top-3 right-3 bg-amber-500 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold animate-pulse shadow">
+                  <i class="fa-solid fa-clock"></i> Expiring
+                </span>
+              ` : ''}
+            </div>
+            
+            <div class="p-4 space-y-2">
+              <h4 class="font-bold text-sm text-gray-800 dark:text-gray-100 line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">${doc.title}</h4>
+              <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span><i class="fa-regular fa-user mr-1"></i> ${doc.member}</span>
+                <span class="font-mono text-[11px] bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">${doc.docNum || 'No ID'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 pb-4 pt-1 flex items-center justify-between border-t border-gray-100 dark:border-gray-800/60 text-[11px] text-gray-400">
+            <span><i class="fa-regular fa-calendar mr-1"></i> ${doc.created}</span>
+            <span class="text-brand-600 dark:text-brand-400 font-semibold group-hover:translate-x-1 transition-transform">View Details <i class="fa-solid fa-chevron-right text-[9px]"></i></span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderListCardHtml(doc) {
+      const categoryIcon = getCategoryIcon(doc.category);
+      return `
+        <div onclick="openViewModal('${doc.id}')" class="bg-white dark:bg-gray-900 p-3.5 rounded-2xl border border-gray-200/80 dark:border-gray-800 flex items-center justify-between gap-4 shadow-sm hover:border-brand-500/50 transition-all cursor-pointer">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-gray-950 flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-800">
+              <img src="${doc.image}" alt="${doc.title}" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-gray-800 dark:text-gray-100">${doc.title}</h4>
+              <p class="text-xs text-gray-400"><i class="${categoryIcon} text-brand-600"></i> ${doc.category} • Owner: ${doc.member}</p>
+            </div>
+          </div>
+          <div class="text-right flex items-center gap-4">
+            <span class="hidden sm:inline font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-xl text-gray-600 dark:text-gray-300">${doc.docNum || 'N/A'}</span>
+            <i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i>
+          </div>
+        </div>
+      `;
+    }
+
+    function getCategoryIcon(cat) {
+      switch(cat) {
+        case 'IDENTITY': return 'fa-solid fa-id-card';
+        case 'FINANCE': return 'fa-solid fa-building-columns';
+        case 'ACADEMIC': return 'fa-solid fa-graduation-cap';
+        case 'MEDICAL': return 'fa-solid fa-heart-pulse';
+        case 'PROPERTY': return 'fa-solid fa-car';
+        default: return 'fa-solid fa-folder';
+      }
+    }
+
+    function checkIsExpiringSoon(expiryDateStr) {
+      if (!expiryDateStr) return false;
+      const diff = (new Date(expiryDateStr) - new Date()) / (1000 * 3600 * 24);
+      return diff >= 0 && diff <= 60;
+    }
+
+    function setViewMode(mode) {
+      state.viewMode = mode;
+      const gridBtn = document.getElementById('view-grid-btn');
+      const listBtn = document.getElementById('view-list-btn');
+
+      if (mode === 'grid') {
+        gridBtn?.classList.add('text-brand-600', 'bg-white', 'dark:bg-gray-700', 'shadow-sm');
+        listBtn?.classList.remove('text-brand-600', 'bg-white', 'dark:bg-gray-700', 'shadow-sm');
+      } else {
+        listBtn?.classList.add('text-brand-600', 'bg-white', 'dark:bg-gray-700', 'shadow-sm');
+        gridBtn?.classList.remove('text-brand-600', 'bg-white', 'dark:bg-gray-700', 'shadow-sm');
+      }
+      renderDocuments();
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('doc-search');
+      if (input) input.value = '';
+      renderDocuments();
+    }
+
+    // Family Vault Member Functions
+    function renderMembers() {
+      const memberFilter = document.getElementById('member-filter');
+      const formMember = document.getElementById('form-member');
+      const membersGrid = document.getElementById('members-grid');
+
+      if (memberFilter) {
+        memberFilter.innerHTML = `<option value="ALL" data-i18n="memberAll">All Family Members</option>` +
+          state.members.map(m => `<option value="${m}">${m}</option>`).join('');
+      }
+
+      if (formMember) {
+        formMember.innerHTML = state.members.map(m => `<option value="${m}">${m}</option>`).join('');
+      }
+
+      if (membersGrid) {
+        membersGrid.innerHTML = state.members.map(m => {
+          const docCount = state.documents.filter(d => d.member === m).length;
+          return `
+            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200/80 dark:border-gray-800 flex items-center justify-between shadow-sm">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-bold flex items-center justify-center text-lg">
+                  ${m.charAt(0)}
+                </div>
+                <div>
+                  <h4 class="font-bold text-sm text-gray-800 dark:text-gray-100">${m}</h4>
+                  <p class="text-xs text-gray-400">${docCount} Documents stored</p>
+                </div>
+              </div>
+              <button onclick="filterByMember('${m}')" class="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/40 rounded-xl transition-colors">
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function filterByMember(memberName) {
+      switchTab('documents');
+      const filterSelect = document.getElementById('member-filter');
+      if (filterSelect) {
+        filterSelect.value = memberName;
+        renderDocuments();
+      }
+    }
+
+    function openAddMemberModal() {
+      document.getElementById('modal-member')?.classList.remove('hidden');
+    }
+
+    function closeAddMemberModal() {
+      document.getElementById('modal-member')?.classList.add('hidden');
+    }
+
+    function saveFamilyMember() {
+      const nameInput = document.getElementById('member-name-input');
+      const name = nameInput?.value.trim();
+      if (!name) return;
+
+      if (!state.members.includes(name)) {
+        state.members.push(name);
+        saveMembersStorage();
+        renderMembers();
+        playBeep('success');
+      }
+      nameInput.value = '';
+      closeAddMemberModal();
+    }
+
+
+    // Document Upload & CRUD Handlers
+    function openUploadModal() {
+      state.selectedDocId = null;
+      document.getElementById('modal-title').innerText = "Add New Document";
+      document.getElementById('doc-form').reset();
+      document.getElementById('edit-doc-id').value = '';
+      document.getElementById('file-preview-container').classList.add('hidden');
+      document.getElementById('modal-doc').classList.remove('hidden');
+    }
+
+    function closeUploadModal() {
+      document.getElementById('modal-doc').classList.add('hidden');
+    }
+
+    function previewDocFile(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const previewImg = document.getElementById('file-preview-img');
+          const previewContainer = document.getElementById('file-preview-container');
+          if (previewImg && previewContainer) {
+            previewImg.src = e.target.result;
+            previewContainer.classList.remove('hidden');
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleDocSubmit(e) {
+      e.preventDefault();
+      
+      const docId = document.getElementById('edit-doc-id').value;
+      const title = document.getElementById('form-title').value.trim();
+      const category = document.getElementById('form-category').value;
+      const member = document.getElementById('form-member').value;
+      const docNum = document.getElementById('form-docnum').value.trim();
+      const expiry = document.getElementById('form-expiry').value;
+      const tagsRaw = document.getElementById('form-tags').value;
+      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+      const fileInput = document.getElementById('form-file');
+
+      const processSave = (imageDataUrl) => {
+        if (docId) {
+          // Edit Existing
+          const index = state.documents.findIndex(d => d.id === docId);
+          if (index !== -1) {
+            state.documents[index] = {
+              ...state.documents[index],
+              title,
+              category,
+              member,
+              docNum,
+              expiry,
+              tags,
+              image: imageDataUrl || state.documents[index].image
+            };
+          }
+        } else {
+          // Create New
+          const newDoc = {
+            id: 'doc_' + Date.now(),
+            title,
+            category,
+            member,
+            docNum,
+            expiry,
+            created: new Date().toISOString().split('T')[0],
+            tags,
+            image: imageDataUrl || 'https://placehold.co/600x400/053b29/ffffff?text=Document+Scan'
+          };
+          state.documents.unshift(newDoc);
+        }
+
+        saveStorageData();
+        renderAll();
+        updateNotifications();
+        closeUploadModal();
+        playBeep('success');
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (event) => processSave(event.target.result);
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        processSave(null);
+      }
+    }
+
+
+    // Full Document Preview Modal Functions
+    function openViewModal(docId) {
+      const doc = state.documents.find(d => d.id === docId);
+      if (!doc) return;
+
+      state.selectedDocId = docId;
+      document.getElementById('view-title').innerText = doc.title;
+      document.getElementById('view-subtitle').innerText = `Owner: ${doc.member} • Category: ${doc.category}`;
+      document.getElementById('view-image').src = doc.image;
+      document.getElementById('view-docnum').innerText = doc.docNum || 'N/A';
+      document.getElementById('view-expiry').innerText = doc.expiry || 'No Expiry Set';
+      document.getElementById('view-created').innerText = doc.created;
+
+      const tagsList = document.getElementById('view-tags-list');
+      if (tagsList) {
+        tagsList.innerHTML = doc.tags.length > 0 
+          ? doc.tags.map(t => `<span class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-md text-[10px] font-semibold">#${t}</span>`).join('')
+          : '<span class="text-gray-400">No tags</span>';
+      }
+
+      document.getElementById('modal-view')?.classList.remove('hidden');
+    }
+
+    function closeViewModal() {
+      document.getElementById('modal-view')?.classList.add('hidden');
+    }
+
+    function editCurrentDoc() {
+      const doc = state.documents.find(d => d.id === state.selectedDocId);
+      if (!doc) return;
+
+      closeViewModal();
+      openUploadModal();
+
+      document.getElementById('modal-title').innerText = "Edit Document";
+      document.getElementById('edit-doc-id').value = doc.id;
+      document.getElementById('form-title').value = doc.title;
+      document.getElementById('form-category').value = doc.category;
+      document.getElementById('form-member').value = doc.member;
+      document.getElementById('form-docnum').value = doc.docNum;
+      document.getElementById('form-expiry').value = doc.expiry;
+      document.getElementById('form-tags').value = doc.tags.join(', ');
+
+      const previewImg = document.getElementById('file-preview-img');
+      const previewContainer = document.getElementById('file-preview-container');
+      if (previewImg && previewContainer) {
+        previewImg.src = doc.image;
+        previewContainer.classList.remove('hidden');
+      }
+    }
+
+    function deleteCurrentDoc() {
+      if (!state.selectedDocId) return;
+      if (confirm('Are you sure you want to delete this document from local storage?')) {
+        state.documents = state.documents.filter(d => d.id !== state.selectedDocId);
+        saveStorageData();
+        renderAll();
+        updateNotifications();
+        closeViewModal();
+        playBeep('click');
+      }
+    }
+
+    function downloadDocImage() {
+      const doc = state.documents.find(d => d.id === state.selectedDocId);
+      if (!doc) return;
+
+      const a = document.createElement('a');
+      a.href = doc.image;
+      a.download = `${doc.title.replace(/\s+/g, '_')}_KAGAJ.png`;
+      a.click();
+    }
+
+
+    // Camera Scanner & Canvas Processing
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        state.cameraStream = stream;
+        const video = document.getElementById('scanner-video');
+        if (video) {
+          video.srcObject = stream;
+          video.classList.remove('hidden');
+          document.getElementById('scanner-placeholder')?.classList.add('hidden');
+          document.getElementById('btn-snap')?.classList.remove('hidden');
+          document.getElementById('btn-snap')?.classList.add('flex');
+        }
+      } catch (err) {
+        alert('Could not access camera. Please allow camera permissions or upload an image file.');
+      }
+    }
+
+    function takeSnapshot() {
+      const video = document.getElementById('scanner-video');
+      const canvas = document.getElementById('scanner-canvas');
+      if (!video || !canvas) return;
+
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Stop camera stream
+      if (state.cameraStream) {
+        state.cameraStream.getTracks().forEach(track => track.stop());
+        state.cameraStream = null;
+      }
+      video.classList.add('hidden');
+      document.getElementById('btn-snap')?.classList.add('hidden');
+
+      applyCanvasFilters();
+      playBeep('click');
+    }
+
+    function handleScannerImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.getElementById('scanner-canvas');
+          if (!canvas) return;
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          document.getElementById('scanner-placeholder')?.classList.add('hidden');
+          applyCanvasFilters();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function applyCanvasFilters() {
+      const canvas = document.getElementById('scanner-canvas');
+      if (!canvas) return;
+
+      const bw = document.getElementById('filter-bw')?.checked;
+      const contrast = document.getElementById('scanner-contrast')?.value || 100;
+      const brightness = document.getElementById('scanner-brightness')?.value || 100;
+      
+      document.getElementById('contrast-val').innerText = contrast + '%';
+      document.getElementById('brightness-val').innerText = brightness + '%';
+
+      let filterStr = `contrast(${contrast}%) brightness(${brightness}%)`;
+      if (bw) filterStr += ` grayscale(100%)`;
+
+      canvas.style.filter = filterStr;
+    }
+
+    function rotateCanvas(deg) {
+      state.scannerRotation = (state.scannerRotation + deg) % 360;
+      const canvas = document.getElementById('scanner-canvas');
+      if (canvas) {
+        canvas.style.transform = `rotate(${state.scannerRotation}deg)`;
+      }
+    }
+
+    function saveScanToDocs() {
+      const canvas = document.getElementById('scanner-canvas');
+      if (!canvas || canvas.width === 0) {
+        alert('Please capture or import a document first.');
+        return;
+      }
+
+      const dataUrl = canvas.toDataURL('image/png');
+      openUploadModal();
+      document.getElementById('form-title').value = `Scan_${new Date().toISOString().slice(0,10)}`;
+      const previewImg = document.getElementById('file-preview-img');
+      const previewContainer = document.getElementById('file-preview-container');
+      if (previewImg && previewContainer) {
+        previewImg.src = dataUrl;
+        previewContainer.classList.remove('hidden');
+      }
+      switchTab('documents');
+    }
+
+
+    // PDF Dossier Export & QR Generator
+    function populatePdfChecklist() {
+      const checklist = document.getElementById('pdf-checklist');
+      if (!checklist) return;
+
+      if (state.documents.length === 0) {
+        checklist.innerHTML = '<p class="text-xs text-gray-400 p-2">No documents available to compile.</p>';
+        return;
+      }
+
+      checklist.innerHTML = state.documents.map(doc => `
+        <label class="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 cursor-pointer hover:border-brand-500">
+          <div class="flex items-center gap-2 text-xs">
+            <input type="checkbox" value="${doc.id}" class="pdf-doc-checkbox w-4 h-4 text-red-600 rounded">
+            <span class="font-semibold text-gray-700 dark:text-gray-200">${doc.title}</span>
+          </div>
+          <span class="text-[10px] text-gray-400">${doc.member}</span>
+        </label>
+      `).join('');
+    }
+
+    function generateMergedPDF() {
+      const checkedBoxes = document.querySelectorAll('.pdf-doc-checkbox:checked');
+      if (checkedBoxes.length === 0) {
+        alert('Please select at least one document to compile into PDF.');
+        return;
+      }
+
+      const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+      const selectedDocs = state.documents.filter(d => selectedIds.includes(d.id));
+
+      if (window.jspdf && window.jspdf.jsPDF) {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        selectedDocs.forEach((doc, idx) => {
+          if (idx > 0) pdf.addPage();
+          pdf.setFontSize(16);
+          pdf.text(doc.title, 14, 20);
+          pdf.setFontSize(10);
+          pdf.text(`Owner: ${doc.member} | ID: ${doc.docNum || 'N/A'} | Expiry: ${doc.expiry || 'N/A'}`, 14, 28);
+          pdf.text(`KAGAJ Digital Document Archive - ${new Date().toLocaleDateString()}`, 14, 34);
+
+          // Add image
+          try {
+            pdf.addImage(doc.image, 'PNG', 14, 42, 180, 120);
+          } catch(e) {
+            // Fallback for placeholder urls
+            pdf.rect(14, 42, 180, 120);
+            pdf.text('Scanned Image Payload Attached', 60, 100);
+          }
+        });
+
+        pdf.save(`KAGAJ_Dossier_${Date.now()}.pdf`);
+        playBeep('success');
+      } else {
+        alert('jsPDF library loaded.');
+      }
+    }
+
+    function populateQrDocSelect() {
+      const select = document.getElementById('qr-doc-select');
+      if (!select) return;
+
+      select.innerHTML = `<option value="">-- Choose Document --</option>` +
+        state.documents.map(d => `<option value="${d.id}">${d.title} (${d.member})</option>`).join('');
+    }
+
+    function generateQrCodeForSelectedDoc() {
+      const docId = document.getElementById('qr-doc-select')?.value;
+      const box = document.getElementById('qrcode-box');
+      const infoText = document.getElementById('qr-info-text');
+
+      if (!box) return;
+      box.innerHTML = '';
+
+      if (!docId) {
+        box.innerHTML = '<span class="text-[10px] text-gray-400">QR Code Preview</span>';
+        if (infoText) infoText.innerText = 'Select a document above to generate an offline QR payload.';
+        return;
+      }
+
+      const doc = state.documents.find(d => d.id === docId);
+      if (!doc) return;
+
+      const payload = JSON.stringify({
+        title: doc.title,
+        docNum: doc.docNum,
+        member: doc.member,
+        category: doc.category,
+        system: "KAGAJ_ORGANIZER_V2"
+      });
+
+      if (window.QRCode) {
+        new QRCode(box, {
+          text: payload,
+          width: 128,
+          height: 128,
+          colorDark: "#053b29",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        if (infoText) infoText.innerText = `QR Code payload ready for ${doc.title}.`;
+      }
+    }
+
+
+    // Expiry Notifications Drawer
+    function updateNotifications() {
+      const badge = document.getElementById('expiry-badge-count');
+      const list = document.getElementById('notification-list');
+
+      const expiringDocs = state.documents.filter(d => checkIsExpiringSoon(d.expiry));
+
+      if (badge) {
+        if (expiringDocs.length > 0) {
+          badge.innerText = expiringDocs.length;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      if (list) {
+        if (expiringDocs.length === 0) {
+          list.innerHTML = `<div class="text-center py-6 text-gray-400" data-i18n="noAlerts">No document expiration alerts.</div>`;
+        } else {
+          list.innerHTML = expiringDocs.map(d => `
+            <div onclick="openViewModal('${d.id}')" class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl flex items-center justify-between cursor-pointer hover:bg-amber-100">
+              <div>
+                <p class="font-bold text-gray-800 dark:text-gray-100">${d.title}</p>
+                <p class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">Expires on: ${d.expiry}</p>
+              </div>
+              <i class="fa-solid fa-chevron-right text-amber-500 text-xs"></i>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    function toggleNotificationPanel() {
+      const panel = document.getElementById('notification-panel');
+      panel?.classList.toggle('hidden');
+    }
+
+    function renderAll() {
+      renderMembers();
+      renderDocuments();
+      calculateStorageMetrics();
+    }
+  </script>
+</body>
+</html>
