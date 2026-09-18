@@ -1,11 +1,26 @@
 {
-  "name": "KAGAJ Document Organizer",
+  "name": "KAGAJ — Intelligent Digital Document Arranger",
   "short_name": "KAGAJ",
-  "start_url": "/index.html",
+  "description": "Organize, scan, and manage digital documents offline.",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#053b29",
   "theme_color": "#053b29",
   "icons": [
-    { "src": "logo.jpg", "sizes": "512x512", "type": "image/jpeg" }
+    {
+      "src": "./logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
   ]
+}
 }
